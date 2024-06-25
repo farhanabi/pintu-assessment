@@ -1,24 +1,28 @@
-// app/(tabs)/trading.tsx
-
 import React, { useState, useEffect } from 'react';
 import {
   Text,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   SafeAreaView,
+  ScrollView,
+  FlatList,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import CustomCandlestickChart from '@/components/CandlestickChart';
+import OrderBook from '@/components/OrderBook';
 import {
   generateInitialData,
   updateCurrentCandle,
   generateNewCandle,
+  generateOrderBookData,
 } from '@/utils/dummyData';
 import { ThemedView } from '@/components/ThemedView';
 
 export default function Trading() {
   const [chartData, setChartData] = useState(generateInitialData());
+  const [orderBookData, setOrderBookData] = useState(
+    generateOrderBookData(chartData[chartData.length - 1].close)
+  );
   const router = useRouter();
 
   useEffect(() => {
@@ -52,6 +56,15 @@ export default function Trading() {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const lastPrice = chartData[chartData.length - 1].close;
+      setOrderBookData(generateOrderBookData(lastPrice));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   const lastCandle = chartData[chartData.length - 1];
   const currentPrice = lastCandle ? lastCandle.close.toFixed(2) : '0.00';
   const priceChange = lastCandle
@@ -63,51 +76,46 @@ export default function Trading() {
       )
     : '0.00';
 
+  const renderItem = ({ item }: { item: string }) => {
+    switch (item) {
+      case 'header':
+        return (
+          <ThemedView style={styles.header}>
+            <Text style={styles.ticker}>BTC</Text>
+            <Text style={styles.name}>Bitcoin</Text>
+            <Text style={styles.currentPrice}>${currentPrice}</Text>
+            <Text
+              style={[
+                styles.priceChange,
+                { color: Number(priceChange) >= 0 ? 'green' : 'red' },
+              ]}
+            >
+              ${priceChange} ({priceChangePercentage}%)
+            </Text>
+          </ThemedView>
+        );
+      case 'chart':
+        return <CustomCandlestickChart data={chartData} />;
+      case 'orderBook':
+        return (
+          <OrderBook bids={orderBookData.bids} asks={orderBookData.asks} />
+        );
+      default:
+        return null;
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <ThemedView style={styles.header}>
-          <Text style={styles.ticker}>BTC</Text>
-          <Text style={styles.name}>Bitcoin</Text>
-          <Text style={styles.currentPrice}>${currentPrice}</Text>
-          <Text
-            style={[
-              styles.priceChange,
-              { color: Number(priceChange) >= 0 ? 'green' : 'red' },
-            ]}
-          >
-            ${priceChange} ({priceChangePercentage}%)
-          </Text>
-        </ThemedView>
-
-        <CustomCandlestickChart data={chartData} />
-
-        <ThemedView style={styles.marketStats}>
-          <Text style={styles.marketStatsTitle}>Market stats</Text>
-          <ThemedView style={styles.marketStatRow}>
-            <Text>Market cap</Text>
-            <Text>$2,905.31B</Text>
-          </ThemedView>
-          <ThemedView style={styles.marketStatRow}>
-            <Text>24h Volume</Text>
-            <Text>$2,905.31B</Text>
-          </ThemedView>
-          <ThemedView style={styles.marketStatRow}>
-            <Text>24h High</Text>
-            <Text>$2,905.31B</Text>
-          </ThemedView>
-          <ThemedView style={styles.marketStatRow}>
-            <Text>24h Low</Text>
-            <Text>$2,905.31B</Text>
-          </ThemedView>
-        </ThemedView>
-      </ScrollView>
+      <FlatList
+        data={['header', 'chart', 'orderBook']}
+        renderItem={renderItem}
+        keyExtractor={(item) => item}
+        style={styles.flatList}
+      />
 
       <ThemedView style={styles.tradeButtonContainer}>
-        <TouchableOpacity
-          style={styles.tradeButton}
-          onPress={() => router.push('/order-book')}
-        >
+        <TouchableOpacity style={styles.tradeButton}>
           <Text style={styles.tradeButtonText}>Trade</Text>
         </TouchableOpacity>
       </ThemedView>
@@ -169,13 +177,16 @@ const styles = StyleSheet.create({
   },
   tradeButton: {
     backgroundColor: 'black',
-    padding: 16,
+    padding: 8,
     alignItems: 'center',
     borderRadius: 8,
   },
   tradeButtonText: {
     color: 'white',
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: 'bold',
+  },
+  flatList: {
+    flex: 1,
   },
 });

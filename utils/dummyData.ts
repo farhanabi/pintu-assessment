@@ -59,4 +59,61 @@ function generateNewCandle(lastCandle: CandlestickData): CandlestickData {
   };
 }
 
-export { generateInitialData, updateCurrentCandle, generateNewCandle };
+interface OrderBookEntry {
+  price: number;
+  amount: number;
+  total: number;
+}
+
+interface OrderBookData {
+  bids: OrderBookEntry[];
+  asks: OrderBookEntry[];
+}
+
+function generateOrderBookData(lastPrice: number): OrderBookData {
+  const bids: OrderBookEntry[] = [];
+  const asks: OrderBookEntry[] = [];
+
+  const bidPriceStep = lastPrice * 0.0001; // 0.01% step
+  const askPriceStep = lastPrice * 0.0001; // 0.01% step
+
+  let bidTotal = 0;
+  let askTotal = 0;
+
+  for (let i = 0; i < 20; i++) {
+    const bidPrice = lastPrice - i * bidPriceStep;
+    const askPrice = lastPrice + i * askPriceStep;
+
+    // Generate more realistic amounts
+    const bidAmount = Math.random() * 5 + 0.1; // Random amount between 0.1 and 5.1
+    const askAmount = Math.random() * 5 + 0.1; // Random amount between 0.1 and 5.1
+
+    bidTotal += bidAmount;
+    askTotal += askAmount;
+
+    bids.push({
+      price: Number(bidPrice.toFixed(2)),
+      amount: Number(bidAmount.toFixed(4)),
+      total: Number(bidTotal.toFixed(4)),
+    });
+
+    asks.push({
+      price: Number(askPrice.toFixed(2)),
+      amount: Number(askAmount.toFixed(4)),
+      total: Number(askTotal.toFixed(4)),
+    });
+  }
+
+  // Sort bids in descending order and asks in ascending order
+  bids.sort((a, b) => b.price - a.price);
+  asks.sort((a, b) => a.price - b.price);
+
+  return { bids, asks };
+}
+
+export {
+  generateInitialData,
+  updateCurrentCandle,
+  generateNewCandle,
+  generateOrderBookData,
+};
