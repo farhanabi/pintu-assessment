@@ -1,103 +1,103 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   Text,
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
-  ScrollView,
   FlatList,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import CustomCandlestickChart from '@/components/CandlestickChart';
 import OrderBook from '@/components/OrderBook';
-import {
-  generateInitialData,
-  updateCurrentCandle,
-  generateNewCandle,
-  generateOrderBookData,
-} from '@/utils/dummyData';
+import { generateOrderBookData } from '@/utils/dummyData';
 import { ThemedView } from '@/components/ThemedView';
+import {
+  fetchBitcoinCandlestickData,
+  fetchBitcoinData,
+} from '@/services/coingecko';
 
 export default function Trading() {
-  const [chartData, setChartData] = useState(generateInitialData());
-  const [orderBookData, setOrderBookData] = useState(
-    generateOrderBookData(chartData[chartData.length - 1].close)
-  );
-  const router = useRouter();
+  const {
+    data: bitcoinData,
+    isLoading: isBitcoinDataLoading,
+    error: bitcoinDataError,
+  } = useQuery({
+    queryKey: ['bitcoinData'],
+    queryFn: fetchBitcoinData,
+    refetchInterval: 20000, // Refetch every 20 seconds
+  });
 
-  useEffect(() => {
-    let candleCounter = 0;
+  const {
+    data: candlestickData,
+    isLoading: isCandlestickDataLoading,
+    error: candlestickDataError,
+  } = useQuery({
+    queryKey: ['candlestickData'],
+    queryFn: fetchBitcoinCandlestickData,
+    refetchInterval: 1800000, // Refetch every 30 minutes
+  });
 
-    const interval = setInterval(() => {
-      setChartData((prevData) => {
-        if (prevData.length === 0) {
-          return generateInitialData();
-        }
+  const orderBookData = React.useMemo(() => {
+    return bitcoinData
+      ? generateOrderBookData(bitcoinData.currentPrice)
+      : { bids: [], asks: [] };
+  }, [bitcoinData]);
 
-        const updatedData = [...prevData];
-        if (candleCounter < 9) {
-          updatedData[updatedData.length - 1] = updateCurrentCandle(
-            updatedData[updatedData.length - 1]
-          );
-          candleCounter++;
-        } else {
-          const lastCandle = updatedData[updatedData.length - 1];
-          const newCandle = generateNewCandle(lastCandle);
-          updatedData.push(newCandle);
-          if (updatedData.length > 30) {
-            updatedData.shift();
-          }
-          candleCounter = 0;
-        }
-        return updatedData;
-      });
-    }, 1000);
+  if (bitcoinDataError || candlestickDataError) {
+    Alert.alert('Error', 'Failed to fetch data. Please try again later.');
+  }
 
-    return () => clearInterval(interval);
-  }, []);
+  const isLoading = isBitcoinDataLoading || isCandlestickDataLoading;
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const lastPrice = chartData[chartData.length - 1].close;
-      setOrderBookData(generateOrderBookData(lastPrice));
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const lastCandle = chartData[chartData.length - 1];
-  const currentPrice = lastCandle ? lastCandle.close.toFixed(2) : '0.00';
-  const priceChange = lastCandle
-    ? (lastCandle.close - lastCandle.open).toFixed(2)
-    : '0.00';
-  const priceChangePercentage = lastCandle
-    ? (((lastCandle.close - lastCandle.open) / lastCandle.open) * 100).toFixed(
-        2
-      )
-    : '0.00';
+  if (isLoading && (!bitcoinData || !candlestickData)) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Text>Loading...</Text>
+      </SafeAreaView>
+    );
+  }
 
   const renderItem = ({ item }: { item: string }) => {
     switch (item) {
       case 'header':
         return (
           <ThemedView style={styles.header}>
-            <Text style={styles.ticker}>BTC</Text>
-            <Text style={styles.name}>Bitcoin</Text>
-            <Text style={styles.currentPrice}>${currentPrice}</Text>
-            <Text
-              style={[
-                styles.priceChange,
-                { color: Number(priceChange) >= 0 ? 'green' : 'red' },
-              ]}
-            >
-              ${priceChange} ({priceChangePercentage}%)
-            </Text>
+            {isBitcoinDataLoading ? (
+              <ActivityIndicator size="large" />
+            ) : (
+              <>
+                <Text style={styles.ticker}>BTC</Text>
+                <Text style={styles.name}>Bitcoin</Text>
+                <Text style={styles.currentPrice}>
+                  ${bitcoinData?.currentPrice.toFixed(2)}
+                </Text>
+                <Text
+                  style={[
+                    styles.priceChange,
+                    {
+                      color: bitcoinData?.priceChange24h >= 0 ? 'green' : 'red',
+                    },
+                  ]}
+                >
+                  ${bitcoinData?.priceChange24h.toFixed(2)} (
+                  {bitcoinData?.priceChangePercentage24h.toFixed(2)}%)
+                </Text>
+              </>
+            )}
           </ThemedView>
         );
       case 'chart':
-        return <CustomCandlestickChart data={chartData} />;
+        return isCandlestickDataLoading ? (
+          <ActivityIndicator size="large" />
+        ) : candlestickData ? (
+          <CustomCandlestickChart data={candlestickData} />
+        ) : null;
       case 'orderBook':
-        return (
+        return isBitcoinDataLoading ? (
+          <ActivityIndicator size="large" />
+        ) : (
           <OrderBook bids={orderBookData.bids} asks={orderBookData.asks} />
         );
       default:
@@ -112,6 +112,7 @@ export default function Trading() {
         renderItem={renderItem}
         keyExtractor={(item) => item}
         style={styles.flatList}
+        contentContainerStyle={styles.flatListContent}
       />
 
       <ThemedView style={styles.tradeButtonContainer}>
@@ -188,5 +189,8 @@ const styles = StyleSheet.create({
   },
   flatList: {
     flex: 1,
+  },
+  flatListContent: {
+    paddingBottom: 16,
   },
 });

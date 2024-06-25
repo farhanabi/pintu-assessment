@@ -31,34 +31,6 @@ function generateInitialData(numCandles: number = 30): CandlestickData[] {
   return data;
 }
 
-function updateCurrentCandle(currentCandle: CandlestickData): CandlestickData {
-  const newClose = currentCandle.close + (Math.random() - 0.5) * 1; // Small random price change
-  const newHigh = Math.max(currentCandle.high, newClose);
-  const newLow = Math.min(currentCandle.low, newClose);
-
-  return {
-    ...currentCandle,
-    high: newHigh,
-    low: newLow,
-    close: newClose,
-  };
-}
-
-function generateNewCandle(lastCandle: CandlestickData): CandlestickData {
-  const open = lastCandle.close;
-  const close = open + (Math.random() - 0.5) * 5;
-  const high = Math.max(open, close) + Math.random() * 2;
-  const low = Math.min(open, close) - Math.random() * 2;
-
-  return {
-    timestamp: Date.now(),
-    open,
-    high,
-    low,
-    close,
-  };
-}
-
 interface OrderBookEntry {
   price: number;
   amount: number;
@@ -111,9 +83,4 @@ function generateOrderBookData(lastPrice: number): OrderBookData {
   return { bids, asks };
 }
 
-export {
-  generateInitialData,
-  updateCurrentCandle,
-  generateNewCandle,
-  generateOrderBookData,
-};
+export { generateInitialData, generateOrderBookData };
