@@ -22,12 +22,33 @@ export function createPriceWebSocket(onPriceUpdate: (price: number) => void) {
   return ws;
 }
 
-export async function fetchBitcoinCandlestickData() {
+export async function fetchBitcoinCandlestickData(interval: string) {
   try {
+    let days;
+    switch (interval) {
+      case '24h':
+        days = 1;
+        break;
+      case '7d':
+        days = 7;
+        break;
+      case '30d':
+        days = 30;
+        break;
+      case '3m':
+        days = 90;
+        break;
+      case '1y':
+        days = 365;
+        break;
+      default:
+        days = 1;
+    }
+
     const response = await axiosInstance.get('/coins/bitcoin/ohlc', {
       params: {
         vs_currency: 'usd',
-        days: 1,
+        days,
       },
     });
 

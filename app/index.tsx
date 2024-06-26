@@ -6,6 +6,7 @@ import {
   Alert,
   ActivityIndicator,
   useColorScheme,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
@@ -19,10 +20,13 @@ import {
   fetchBitcoinCandlestickData,
 } from '@/services/data';
 import { ThemedText } from '@/components/ThemedText';
+import { useThemeColor } from '@/hooks/useThemeColor';
+import { Colors } from '../constants/Colors';
 
 export default function Trading() {
   const colorScheme = useColorScheme();
   const [bitcoinPrice, setBitcoinPrice] = useState<number | null>(null);
+  const [selectedInterval, setSelectedInterval] = useState('24h');
 
   useEffect(() => {
     const ws = createPriceWebSocket((data) => {
@@ -41,8 +45,8 @@ export default function Trading() {
     isLoading: isCandlestickDataLoading,
     error: candlestickDataError,
   } = useQuery({
-    queryKey: ['candlestickData'],
-    queryFn: fetchBitcoinCandlestickData,
+    queryKey: ['candlestickData', selectedInterval],
+    queryFn: () => fetchBitcoinCandlestickData(selectedInterval),
     refetchInterval: 1800000, // Refetch every 30 minutes
   });
 
@@ -65,6 +69,43 @@ export default function Trading() {
       </SafeAreaView>
     );
   }
+
+  const renderIntervalButton = (interval: string) => (
+    <TouchableOpacity
+      style={[
+        styles.intervalButton,
+        {
+          borderColor:
+            colorScheme === 'dark' ? Colors.dark.tint : Colors.light.tint,
+        },
+        selectedInterval === interval && {
+          backgroundColor:
+            colorScheme === 'dark' ? Colors.dark.tint : Colors.light.tint,
+          borderColor:
+            colorScheme === 'dark'
+              ? Colors.dark.background
+              : Colors.light.background,
+        },
+      ]}
+      onPress={() => setSelectedInterval(interval)}
+    >
+      <ThemedText
+        style={[
+          styles.intervalButtonText,
+          {
+            color:
+              colorScheme === 'dark' ? Colors.dark.text : Colors.light.text,
+          },
+          selectedInterval === interval && {
+            color:
+              colorScheme === 'dark' ? Colors.light.text : Colors.dark.text,
+          },
+        ]}
+      >
+        {interval}
+      </ThemedText>
+    </TouchableOpacity>
+  );
 
   const renderItem = ({ item }: { item: string }) => {
     switch (item) {
@@ -93,6 +134,16 @@ export default function Trading() {
         ) : candlestickData ? (
           <CustomCandlestickChart data={candlestickData} />
         ) : null;
+      case 'intervalSelector':
+        return (
+          <View style={styles.intervalSelectorContainer}>
+            {renderIntervalButton('24h')}
+            {renderIntervalButton('7d')}
+            {renderIntervalButton('30d')}
+            {renderIntervalButton('3m')}
+            {renderIntervalButton('1y')}
+          </View>
+        );
       case 'orderBook':
         return !bitcoinPrice ? (
           <ActivityIndicator size="large" />
@@ -112,7 +163,7 @@ export default function Trading() {
       ]}
     >
       <FlatList
-        data={['header', 'chart', 'orderBook']}
+        data={['header', 'chart', 'intervalSelector', 'orderBook']}
         renderItem={renderItem}
         keyExtractor={(item) => item}
         style={styles.flatList}
@@ -195,5 +246,27 @@ const styles = StyleSheet.create({
   },
   flatListContent: {
     paddingBottom: 16,
+  },
+  intervalSelectorContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+  },
+  intervalButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  selectedIntervalButton: {
+    backgroundColor: '#007AFF',
+    borderColor: '#007AFF',
+  },
+  intervalButtonText: {
+    fontSize: 14,
+  },
+  selectedIntervalButtonText: {
+    color: 'white',
   },
 });
