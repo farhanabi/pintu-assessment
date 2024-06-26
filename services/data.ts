@@ -8,32 +8,18 @@ const axiosInstance = axios.create({
     'x-cg-demo-api-key': process.env.EXPO_PUBLIC_COINGECKO_API_KEY,
   },
 });
-export async function fetchBitcoinData() {
-  try {
-    const response = await axiosInstance.get('/coins/bitcoin', {
-      params: {
-        localization: false,
-        tickers: false,
-        market_data: true,
-        community_data: false,
-        developer_data: false,
-        sparkline: false,
-      },
-    });
 
-    const { market_data } = response.data;
+export function createPriceWebSocket(onPriceUpdate: (price: number) => void) {
+  const ws = new WebSocket('wss://ws.coincap.io/prices?assets=bitcoin');
 
-    return {
-      currentPrice: market_data.current_price.usd,
-      priceChange24h: market_data.price_change_24h,
-      priceChangePercentage24h: market_data.price_change_percentage_24h,
-      high24h: market_data.high_24h.usd,
-      low24h: market_data.low_24h.usd,
-    };
-  } catch (error) {
-    console.error('Error fetching Bitcoin data:', error);
-    return null;
-  }
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
+    if (data.bitcoin) {
+      onPriceUpdate(parseFloat(data.bitcoin));
+    }
+  };
+
+  return ws;
 }
 
 export async function fetchBitcoinCandlestickData() {

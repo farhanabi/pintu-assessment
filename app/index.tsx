@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Text,
   StyleSheet,
@@ -14,20 +14,24 @@ import OrderBook from '@/components/OrderBook';
 import { generateOrderBookData } from '@/utils/dummyData';
 import { ThemedView } from '@/components/ThemedView';
 import {
+  createPriceWebSocket,
   fetchBitcoinCandlestickData,
-  fetchBitcoinData,
-} from '@/services/coingecko';
+} from '@/services/data';
 
 export default function Trading() {
-  const {
-    data: bitcoinData,
-    isLoading: isBitcoinDataLoading,
-    error: bitcoinDataError,
-  } = useQuery({
-    queryKey: ['bitcoinData'],
-    queryFn: fetchBitcoinData,
-    refetchInterval: 20000, // Refetch every 20 seconds
-  });
+  const [bitcoinPrice, setBitcoinPrice] = useState<number | null>(null);
+
+  useEffect(() => {
+    const ws = createPriceWebSocket((data) => {
+      if (data) {
+        setBitcoinPrice(data);
+      }
+    });
+
+    return () => {
+      ws.close();
+    };
+  }, []);
 
   const {
     data: candlestickData,
@@ -40,18 +44,18 @@ export default function Trading() {
   });
 
   const orderBookData = React.useMemo(() => {
-    return bitcoinData
-      ? generateOrderBookData(bitcoinData.currentPrice)
+    return bitcoinPrice
+      ? generateOrderBookData(bitcoinPrice)
       : { bids: [], asks: [] };
-  }, [bitcoinData]);
+  }, [bitcoinPrice]);
 
-  if (bitcoinDataError || candlestickDataError) {
+  if (candlestickDataError) {
     Alert.alert('Error', 'Failed to fetch data. Please try again later.');
   }
 
-  const isLoading = isBitcoinDataLoading || isCandlestickDataLoading;
+  const isLoading = isCandlestickDataLoading || !bitcoinPrice;
 
-  if (isLoading && (!bitcoinData || !candlestickData)) {
+  if (isLoading && !candlestickData) {
     return (
       <SafeAreaView style={styles.container}>
         <Text>Loading...</Text>
@@ -64,25 +68,14 @@ export default function Trading() {
       case 'header':
         return (
           <ThemedView style={styles.header}>
-            {isBitcoinDataLoading ? (
+            {!bitcoinPrice ? (
               <ActivityIndicator size="large" />
             ) : (
               <>
                 <Text style={styles.ticker}>BTC</Text>
                 <Text style={styles.name}>Bitcoin</Text>
                 <Text style={styles.currentPrice}>
-                  ${bitcoinData?.currentPrice.toFixed(2)}
-                </Text>
-                <Text
-                  style={[
-                    styles.priceChange,
-                    {
-                      color: bitcoinData?.priceChange24h >= 0 ? 'green' : 'red',
-                    },
-                  ]}
-                >
-                  ${bitcoinData?.priceChange24h.toFixed(2)} (
-                  {bitcoinData?.priceChangePercentage24h.toFixed(2)}%)
+                  ${bitcoinPrice.toFixed(2)}
                 </Text>
               </>
             )}
@@ -95,7 +88,7 @@ export default function Trading() {
           <CustomCandlestickChart data={candlestickData} />
         ) : null;
       case 'orderBook':
-        return isBitcoinDataLoading ? (
+        return !bitcoinPrice ? (
           <ActivityIndicator size="large" />
         ) : (
           <OrderBook bids={orderBookData.bids} asks={orderBookData.asks} />
