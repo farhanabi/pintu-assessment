@@ -1,0 +1,18 @@
+{
+  "build": {
+    "base": {
+      "node": "18.16.1",
+      "ios": {
+        "resourceClass": "m-medium"
+      }
+    },
+    "preview": {
+      "extends": "base",
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+    },
+    "production": {}
+  }
+}
