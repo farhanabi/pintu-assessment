@@ -38,8 +38,8 @@ export async function fetchBitcoinCandlestickData(interval: string) {
       case '3m':
         days = 90;
         break;
-      case '1y':
-        days = 365;
+      case '6m':
+        days = 180;
         break;
       default:
         days = 1;

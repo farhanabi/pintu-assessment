@@ -133,7 +133,7 @@ export default function Trading() {
       case 'intervalSelector':
         return (
           <View style={styles.intervalSelectorContainer}>
-            {['24h', '7d', '30d', '3m', '1y'].map(renderIntervalButton)}
+            {['24h', '7d', '30d', '3m', '6m'].map(renderIntervalButton)}
           </View>
         );
       case 'orderBook':

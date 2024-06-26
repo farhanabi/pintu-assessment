@@ -59,15 +59,15 @@ const CustomCandlestickChart: React.FC<CandlestickChartProps> = ({ data }) => {
       return (
         <React.Fragment key={i}>
           <Line
-            x1={0}
+            x1={PRICE_LABEL_WIDTH}
             y1={y}
-            x2={CHART_WIDTH - PRICE_LABEL_WIDTH}
+            x2={CHART_WIDTH}
             y2={y}
             stroke={gridColor}
             strokeWidth="1"
           />
           <Text
-            x={CHART_WIDTH}
+            x={PRICE_LABEL_WIDTH}
             y={y}
             fontSize="10"
             fill={textColor}
