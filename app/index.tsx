@@ -55,16 +55,6 @@ export default function Trading() {
     }
   }, [candlestickDataError]);
 
-  const isLoading = isCandlestickDataLoading || !bitcoinPrice;
-
-  if (isLoading && !candlestickData) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <ThemedText>Loading...</ThemedText>
-      </SafeAreaView>
-    );
-  }
-
   const renderIntervalButton = (interval: string) => (
     <TouchableOpacity
       key={interval}
