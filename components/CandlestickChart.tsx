@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions, useColorScheme } from 'react-native';
 import { CandlestickChart } from 'react-native-wagmi-charts';
+import { ThemedView } from './ThemedView';
 
 interface CandlestickData {
   timestamp: number;
@@ -17,6 +18,7 @@ interface CandlestickChartProps {
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const CustomCandlestickChart: React.FC<CandlestickChartProps> = ({ data }) => {
+  const colorScheme = useColorScheme();
   const formattedData = data.map((candle) => ({
     timestamp: candle.timestamp,
     open: candle.open,
@@ -26,7 +28,12 @@ const CustomCandlestickChart: React.FC<CandlestickChartProps> = ({ data }) => {
   }));
 
   return (
-    <View style={styles.container}>
+    <ThemedView
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#151718' : '#fff' },
+      ]}
+    >
       <CandlestickChart.Provider data={formattedData}>
         <CandlestickChart height={screenHeight * 0.4} width={screenWidth - 20}>
           <CandlestickChart.Candles />
@@ -34,28 +41,69 @@ const CustomCandlestickChart: React.FC<CandlestickChartProps> = ({ data }) => {
             <CandlestickChart.Tooltip />
           </CandlestickChart.Crosshair>
         </CandlestickChart>
-        <View style={styles.textContainer}>
-          <CandlestickChart.PriceText type="open" />
-          <CandlestickChart.PriceText type="high" />
-          <CandlestickChart.PriceText type="low" />
-          <CandlestickChart.PriceText type="close" />
-        </View>
-        <CandlestickChart.DatetimeText style={styles.dateText} />
+        <ThemedView style={styles.textContainer}>
+          <CandlestickChart.PriceText
+            type="open"
+            style={[
+              styles.priceText,
+              {
+                color: colorScheme === 'dark' ? '#9BA1A6' : 'black',
+              },
+            ]}
+          />
+          <CandlestickChart.PriceText
+            type="high"
+            style={[
+              styles.priceText,
+              {
+                color: colorScheme === 'dark' ? '#9BA1A6' : 'black',
+              },
+            ]}
+          />
+          <CandlestickChart.PriceText
+            type="low"
+            style={[
+              styles.priceText,
+              {
+                color: colorScheme === 'dark' ? '#9BA1A6' : 'black',
+              },
+            ]}
+          />
+          <CandlestickChart.PriceText
+            type="close"
+            style={[
+              styles.priceText,
+              {
+                color: colorScheme === 'dark' ? '#9BA1A6' : 'black',
+              },
+            ]}
+          />
+        </ThemedView>
+        <CandlestickChart.DatetimeText
+          style={[
+            styles.dateText,
+            {
+              color: colorScheme === 'dark' ? 'white' : 'black',
+            },
+          ]}
+        />
       </CandlestickChart.Provider>
-    </View>
+    </ThemedView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: 'white',
-    borderRadius: 8,
     padding: 10,
   },
   textContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 10,
+  },
+  priceText: {
+    fontSize: 12,
+    fontWeight: 'bold',
   },
   dateText: {
     textAlign: 'center',

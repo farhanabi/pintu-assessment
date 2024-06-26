@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList } from 'react-native';
+import { View, StyleSheet, FlatList } from 'react-native';
 import { ThemedView } from './ThemedView';
+import { ThemedText } from './ThemedText';
 
 interface OrderBookEntry {
   price: number;
@@ -28,18 +29,18 @@ const OrderBookItem: React.FC<{
         ]}
       />
     </View>
-    <Text style={[styles.orderBookText, styles.bidText]}>
+    <ThemedText style={[styles.orderBookText, styles.bidText]}>
       {bid ? bid.amount.toFixed(4) : '-'}
-    </Text>
-    <Text style={[styles.orderBookText, styles.bidText]}>
+    </ThemedText>
+    <ThemedText style={[styles.orderBookText, styles.bidText]}>
       {bid ? bid.price.toFixed(2) : '-'}
-    </Text>
-    <Text style={[styles.orderBookText, styles.askText]}>
+    </ThemedText>
+    <ThemedText style={[styles.orderBookText, styles.askText]}>
       {ask ? ask.price.toFixed(2) : '-'}
-    </Text>
-    <Text style={[styles.orderBookText, styles.askText]}>
+    </ThemedText>
+    <ThemedText style={[styles.orderBookText, styles.askText]}>
       {ask ? ask.amount.toFixed(4) : '-'}
-    </Text>
+    </ThemedText>
     <View style={styles.askBackground}>
       <View
         style={[
@@ -84,24 +85,32 @@ const OrderBook: React.FC<OrderBookProps> = ({ bids, asks }) => {
 
   return (
     <ThemedView style={styles.container}>
-      <Text style={styles.title}>Order Book</Text>
+      <ThemedText style={styles.title}>Order Book</ThemedText>
       <View style={styles.percentageLine}>
         <View style={[styles.bidPercentage, { width: `${bidPercentage}%` }]} />
         <View style={[styles.askPercentage, { width: `${askPercentage}%` }]} />
       </View>
       <View style={styles.percentageLabels}>
-        <Text style={[styles.percentageLabel, styles.bidText]}>
+        <ThemedText style={[styles.percentageLabel, styles.bidText]}>
           {bidPercentage.toFixed(1)}%
-        </Text>
-        <Text style={[styles.percentageLabel, styles.askText]}>
+        </ThemedText>
+        <ThemedText style={[styles.percentageLabel, styles.askText]}>
           {askPercentage.toFixed(1)}%
-        </Text>
+        </ThemedText>
       </View>
       <View style={styles.header}>
-        <Text style={[styles.headerText, styles.bidText]}>Amount</Text>
-        <Text style={[styles.headerText, styles.bidText]}>Bid Price</Text>
-        <Text style={[styles.headerText, styles.askText]}>Ask Price</Text>
-        <Text style={[styles.headerText, styles.askText]}>Amount</Text>
+        <ThemedText style={[styles.headerText, styles.bidText]}>
+          Amount
+        </ThemedText>
+        <ThemedText style={[styles.headerText, styles.bidText]}>
+          Bid Price
+        </ThemedText>
+        <ThemedText style={[styles.headerText, styles.askText]}>
+          Ask Price
+        </ThemedText>
+        <ThemedText style={[styles.headerText, styles.askText]}>
+          Amount
+        </ThemedText>
       </View>
       <FlatList
         data={data}

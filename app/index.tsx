@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Text,
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
   FlatList,
   Alert,
   ActivityIndicator,
+  useColorScheme,
 } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import CustomCandlestickChart from '@/components/CandlestickChart';
@@ -17,8 +17,10 @@ import {
   createPriceWebSocket,
   fetchBitcoinCandlestickData,
 } from '@/services/data';
+import { ThemedText } from '@/components/ThemedText';
 
 export default function Trading() {
+  const colorScheme = useColorScheme();
   const [bitcoinPrice, setBitcoinPrice] = useState<number | null>(null);
 
   useEffect(() => {
@@ -58,7 +60,7 @@ export default function Trading() {
   if (isLoading && !candlestickData) {
     return (
       <SafeAreaView style={styles.container}>
-        <Text>Loading...</Text>
+        <ThemedText>Loading...</ThemedText>
       </SafeAreaView>
     );
   }
@@ -72,11 +74,11 @@ export default function Trading() {
               <ActivityIndicator size="large" />
             ) : (
               <>
-                <Text style={styles.ticker}>BTC</Text>
-                <Text style={styles.name}>Bitcoin</Text>
-                <Text style={styles.currentPrice}>
+                <ThemedText style={styles.ticker}>BTC</ThemedText>
+                <ThemedText style={styles.name}>Bitcoin</ThemedText>
+                <ThemedText style={styles.currentPrice}>
                   ${bitcoinPrice.toFixed(2)}
-                </Text>
+                </ThemedText>
               </>
             )}
           </ThemedView>
@@ -99,7 +101,12 @@ export default function Trading() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={[
+        styles.container,
+        { backgroundColor: colorScheme === 'dark' ? '#151718' : '#fff' },
+      ]}
+    >
       <FlatList
         data={['header', 'chart', 'orderBook']}
         renderItem={renderItem}
@@ -110,7 +117,7 @@ export default function Trading() {
 
       <ThemedView style={styles.tradeButtonContainer}>
         <TouchableOpacity style={styles.tradeButton}>
-          <Text style={styles.tradeButtonText}>Trade</Text>
+          <ThemedText style={styles.tradeButtonText}>Trade</ThemedText>
         </TouchableOpacity>
       </ThemedView>
     </SafeAreaView>
@@ -120,7 +127,6 @@ export default function Trading() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
   scrollView: {
     flex: 1,
