@@ -33,10 +33,10 @@ const OrderBookItem: React.FC<{
       {bid ? bid.amount.toFixed(4) : '-'}
     </ThemedText>
     <ThemedText style={[styles.orderBookText, styles.bidText]}>
-      {bid ? bid.price.toFixed(2) : '-'}
+      {bid ? bid.price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '-'}
     </ThemedText>
     <ThemedText style={[styles.orderBookText, styles.askText]}>
-      {ask ? ask.price.toFixed(2) : '-'}
+      {ask ? ask.price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '-'}
     </ThemedText>
     <ThemedText style={[styles.orderBookText, styles.askText]}>
       {ask ? ask.amount.toFixed(4) : '-'}

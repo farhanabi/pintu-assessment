@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, Dimensions, useColorScheme } from 'react-native';
 import { CandlestickChart } from 'react-native-wagmi-charts';
 import { ThemedView } from './ThemedView';
+import Svg, { Line, Text } from 'react-native-svg';
 
 interface CandlestickData {
   timestamp: number;
@@ -16,6 +17,10 @@ interface CandlestickChartProps {
 }
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const CHART_HEIGHT = screenHeight * 0.4;
+const CHART_WIDTH = screenWidth - 20;
+const PRICE_LABEL_WIDTH = 50;
+const DATE_LABEL_HEIGHT = 20;
 
 const CustomCandlestickChart: React.FC<CandlestickChartProps> = ({ data }) => {
   const colorScheme = useColorScheme();
@@ -27,6 +32,56 @@ const CustomCandlestickChart: React.FC<CandlestickChartProps> = ({ data }) => {
     close: candle.close,
   }));
 
+  const gridColor =
+    colorScheme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
+  const textColor =
+    colorScheme === 'dark' ? 'rgba(255,255,255,0.5)' : 'rgba(0,0,0,0.5)';
+
+  const { minPrice, maxPrice } = useMemo(() => {
+    const prices = formattedData.flatMap((d) => [d.low, d.high]);
+    return {
+      minPrice: Math.min(...prices),
+      maxPrice: Math.max(...prices),
+    };
+  }, [formattedData]);
+
+  const renderGrid = () => {
+    const horizontalLines = 5;
+    const gridElements = [];
+
+    // Horizontal lines and price labels
+    for (let i = 0; i <= horizontalLines; i++) {
+      const y = (i / horizontalLines) * CHART_HEIGHT;
+      const price = maxPrice - (i / horizontalLines) * (maxPrice - minPrice);
+      gridElements.push(
+        <Line
+          key={`h-${i}`}
+          x1={0}
+          y1={y}
+          x2={CHART_WIDTH - PRICE_LABEL_WIDTH}
+          y2={y}
+          stroke={gridColor}
+          strokeWidth="1"
+        />
+      );
+      gridElements.push(
+        <Text
+          key={`h-text-${i}`}
+          x={CHART_WIDTH}
+          y={y}
+          fontSize="10"
+          fill={textColor}
+          textAnchor="end"
+          alignmentBaseline="middle"
+        >
+          {price.toFixed(2)}
+        </Text>
+      );
+    }
+
+    return gridElements;
+  };
+
   return (
     <ThemedView
       style={[
@@ -35,7 +90,14 @@ const CustomCandlestickChart: React.FC<CandlestickChartProps> = ({ data }) => {
       ]}
     >
       <CandlestickChart.Provider data={formattedData}>
-        <CandlestickChart height={screenHeight * 0.4} width={screenWidth - 20}>
+        <CandlestickChart height={CHART_HEIGHT} width={CHART_WIDTH}>
+          <Svg
+            height={CHART_HEIGHT + DATE_LABEL_HEIGHT}
+            width={CHART_WIDTH}
+            style={StyleSheet.absoluteFill}
+          >
+            {renderGrid()}
+          </Svg>
           <CandlestickChart.Candles />
           <CandlestickChart.Crosshair>
             <CandlestickChart.Tooltip />
