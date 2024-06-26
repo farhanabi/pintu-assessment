@@ -74,7 +74,7 @@ const CustomCandlestickChart: React.FC<CandlestickChartProps> = ({ data }) => {
           textAnchor="end"
           alignmentBaseline="middle"
         >
-          {price.toFixed(2)}
+          {price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
         </Text>
       );
     }
