@@ -2,13 +2,14 @@ import React, { useEffect, useMemo, useState } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
-  SafeAreaView,
   FlatList,
   Alert,
   ActivityIndicator,
   useColorScheme,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
+
 import CustomCandlestickChart from '@/components/CandlestickChart';
 import OrderBook from '@/components/OrderBook';
 import { generateOrderBookData } from '@/utils/dummyData';
