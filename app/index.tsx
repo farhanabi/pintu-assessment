@@ -78,7 +78,10 @@ export default function Trading() {
                 <ThemedText style={styles.ticker}>BTC</ThemedText>
                 <ThemedText style={styles.name}>Bitcoin</ThemedText>
                 <ThemedText style={styles.currentPrice}>
-                  ${bitcoinPrice.toFixed(2)}
+                  $
+                  {bitcoinPrice
+                    .toFixed(2)
+                    .replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
                 </ThemedText>
               </>
             )}
