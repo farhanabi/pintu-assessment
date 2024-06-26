@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   StyleSheet,
   TouchableOpacity,
@@ -8,20 +8,18 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useQuery } from '@tanstack/react-query';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import CustomCandlestickChart from '@/components/CandlestickChart';
 import OrderBook from '@/components/OrderBook';
-import { generateOrderBookData } from '@/utils/dummyData';
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedView, ThemedText } from '@/components/Themed';
+import { Colors } from '@/constants/Colors';
 import {
   createPriceWebSocket,
   fetchBitcoinCandlestickData,
 } from '@/services/data';
-import { ThemedText } from '@/components/ThemedText';
-import { useThemeColor } from '@/hooks/useThemeColor';
-import { Colors } from '../constants/Colors';
+import { generateOrderBookData } from '@/utils/dummyData';
 
 export default function Trading() {
   const colorScheme = useColorScheme();
@@ -29,15 +27,8 @@ export default function Trading() {
   const [selectedInterval, setSelectedInterval] = useState('24h');
 
   useEffect(() => {
-    const ws = createPriceWebSocket((data) => {
-      if (data) {
-        setBitcoinPrice(data);
-      }
-    });
-
-    return () => {
-      ws.close();
-    };
+    const ws = createPriceWebSocket(setBitcoinPrice);
+    return () => ws.close();
   }, []);
 
   const {
@@ -50,15 +41,19 @@ export default function Trading() {
     refetchInterval: 1800000, // Refetch every 30 minutes
   });
 
-  const orderBookData = React.useMemo(() => {
-    return bitcoinPrice
-      ? generateOrderBookData(bitcoinPrice)
-      : { bids: [], asks: [] };
-  }, [bitcoinPrice]);
+  const orderBookData = useMemo(
+    () =>
+      bitcoinPrice
+        ? generateOrderBookData(bitcoinPrice)
+        : { bids: [], asks: [] },
+    [bitcoinPrice]
+  );
 
-  if (candlestickDataError) {
-    Alert.alert('Error', 'Failed to fetch data. Please try again later.');
-  }
+  useEffect(() => {
+    if (candlestickDataError) {
+      Alert.alert('Error', 'Failed to fetch data. Please try again later.');
+    }
+  }, [candlestickDataError]);
 
   const isLoading = isCandlestickDataLoading || !bitcoinPrice;
 
@@ -72,6 +67,7 @@ export default function Trading() {
 
   const renderIntervalButton = (interval: string) => (
     <TouchableOpacity
+      key={interval}
       style={[
         styles.intervalButton,
         {
@@ -137,11 +133,7 @@ export default function Trading() {
       case 'intervalSelector':
         return (
           <View style={styles.intervalSelectorContainer}>
-            {renderIntervalButton('24h')}
-            {renderIntervalButton('7d')}
-            {renderIntervalButton('30d')}
-            {renderIntervalButton('3m')}
-            {renderIntervalButton('1y')}
+            {['24h', '7d', '30d', '3m', '1y'].map(renderIntervalButton)}
           </View>
         );
       case 'orderBook':
@@ -169,7 +161,6 @@ export default function Trading() {
         style={styles.flatList}
         contentContainerStyle={styles.flatListContent}
       />
-
       <ThemedView style={styles.tradeButtonContainer}>
         <TouchableOpacity style={styles.tradeButton}>
           <ThemedText style={styles.tradeButtonText}>Trade</ThemedText>
@@ -181,9 +172,6 @@ export default function Trading() {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-  scrollView: {
     flex: 1,
   },
   header: {
@@ -201,33 +189,25 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: 'bold',
   },
-  lastClose: {
-    fontSize: 16,
-    color: 'gray',
-  },
-  priceChange: {
-    fontSize: 18,
-  },
-  marketStats: {
-    padding: 16,
-  },
-  marketStatsTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  marketStatRow: {
+  intervalSelectorContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+  },
+  intervalButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  intervalButtonText: {
+    fontSize: 14,
   },
   tradeButtonContainer: {
     padding: 16,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
   },
   tradeButton: {
@@ -246,27 +226,5 @@ const styles = StyleSheet.create({
   },
   flatListContent: {
     paddingBottom: 16,
-  },
-  intervalSelectorContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-  },
-  intervalButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: '#ccc',
-  },
-  selectedIntervalButton: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
-  },
-  intervalButtonText: {
-    fontSize: 14,
-  },
-  selectedIntervalButtonText: {
-    color: 'white',
   },
 });

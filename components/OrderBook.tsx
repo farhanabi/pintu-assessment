@@ -1,7 +1,8 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
-import { ThemedView } from './ThemedView';
-import { ThemedText } from './ThemedText';
+
+import { formatPrice } from '@/utils/formatPrice';
+import { ThemedView, ThemedText } from './Themed';
 
 interface OrderBookEntry {
   price: number;
@@ -33,10 +34,10 @@ const OrderBookItem: React.FC<{
       {bid ? bid.amount.toFixed(4) : '-'}
     </ThemedText>
     <ThemedText style={[styles.orderBookText, styles.bidText]}>
-      {bid ? bid.price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '-'}
+      {bid ? formatPrice(bid.price) : '-'}
     </ThemedText>
     <ThemedText style={[styles.orderBookText, styles.askText]}>
-      {ask ? ask.price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '-'}
+      {ask ? formatPrice(ask.price) : '-'}
     </ThemedText>
     <ThemedText style={[styles.orderBookText, styles.askText]}>
       {ask ? ask.amount.toFixed(4) : '-'}
@@ -66,13 +67,9 @@ const OrderBook: React.FC<OrderBookProps> = ({ bids, asks }) => {
   const bidPercentage = (maxBidTotal / totalVolume) * 100;
   const askPercentage = (maxAskTotal / totalVolume) * 100;
 
-  const renderItem = ({
-    item,
-    index,
-  }: {
-    item: OrderBookEntry | null;
-    index: number;
-  }) => (
+  const data = Array(Math.max(bids.length, asks.length)).fill(null);
+
+  const renderItem = ({ index }: { index: number }) => (
     <OrderBookItem
       bid={bids[index]}
       ask={asks[index]}
@@ -80,8 +77,6 @@ const OrderBook: React.FC<OrderBookProps> = ({ bids, asks }) => {
       maxAskTotal={maxAskTotal}
     />
   );
-
-  const data = Array(Math.max(bids.length, asks.length)).fill(null);
 
   return (
     <ThemedView style={styles.container}>

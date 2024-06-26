@@ -1,8 +1,10 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, Dimensions, useColorScheme } from 'react-native';
-import { CandlestickChart } from 'react-native-wagmi-charts';
-import { ThemedView } from './ThemedView';
 import Svg, { Line, Text } from 'react-native-svg';
+import { CandlestickChart } from 'react-native-wagmi-charts';
+
+import { ThemedView } from './Themed';
+import { formatPrice } from '@/utils/formatPrice';
 
 interface CandlestickData {
   timestamp: number;
@@ -24,13 +26,17 @@ const DATE_LABEL_HEIGHT = 20;
 
 const CustomCandlestickChart: React.FC<CandlestickChartProps> = ({ data }) => {
   const colorScheme = useColorScheme();
-  const formattedData = data.map((candle) => ({
-    timestamp: candle.timestamp,
-    open: candle.open,
-    high: candle.high,
-    low: candle.low,
-    close: candle.close,
-  }));
+  const formattedData = useMemo(
+    () =>
+      data.map((candle) => ({
+        timestamp: candle.timestamp,
+        open: candle.open,
+        high: candle.high,
+        low: candle.low,
+        close: candle.close,
+      })),
+    [data]
+  );
 
   const gridColor =
     colorScheme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)';
@@ -47,39 +53,32 @@ const CustomCandlestickChart: React.FC<CandlestickChartProps> = ({ data }) => {
 
   const renderGrid = () => {
     const horizontalLines = 5;
-    const gridElements = [];
-
-    // Horizontal lines and price labels
-    for (let i = 0; i <= horizontalLines; i++) {
+    return Array.from({ length: horizontalLines + 1 }, (_, i) => {
       const y = (i / horizontalLines) * CHART_HEIGHT;
       const price = maxPrice - (i / horizontalLines) * (maxPrice - minPrice);
-      gridElements.push(
-        <Line
-          key={`h-${i}`}
-          x1={0}
-          y1={y}
-          x2={CHART_WIDTH - PRICE_LABEL_WIDTH}
-          y2={y}
-          stroke={gridColor}
-          strokeWidth="1"
-        />
+      return (
+        <React.Fragment key={i}>
+          <Line
+            x1={0}
+            y1={y}
+            x2={CHART_WIDTH - PRICE_LABEL_WIDTH}
+            y2={y}
+            stroke={gridColor}
+            strokeWidth="1"
+          />
+          <Text
+            x={CHART_WIDTH}
+            y={y}
+            fontSize="10"
+            fill={textColor}
+            textAnchor="end"
+            alignmentBaseline="middle"
+          >
+            {formatPrice(price)}
+          </Text>
+        </React.Fragment>
       );
-      gridElements.push(
-        <Text
-          key={`h-text-${i}`}
-          x={CHART_WIDTH}
-          y={y}
-          fontSize="10"
-          fill={textColor}
-          textAnchor="end"
-          alignmentBaseline="middle"
-        >
-          {price.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-        </Text>
-      );
-    }
-
-    return gridElements;
+    });
   };
 
   return (
@@ -104,49 +103,21 @@ const CustomCandlestickChart: React.FC<CandlestickChartProps> = ({ data }) => {
           </CandlestickChart.Crosshair>
         </CandlestickChart>
         <ThemedView style={styles.textContainer}>
-          <CandlestickChart.PriceText
-            type="open"
-            style={[
-              styles.priceText,
-              {
-                color: colorScheme === 'dark' ? '#9BA1A6' : 'black',
-              },
-            ]}
-          />
-          <CandlestickChart.PriceText
-            type="high"
-            style={[
-              styles.priceText,
-              {
-                color: colorScheme === 'dark' ? '#9BA1A6' : 'black',
-              },
-            ]}
-          />
-          <CandlestickChart.PriceText
-            type="low"
-            style={[
-              styles.priceText,
-              {
-                color: colorScheme === 'dark' ? '#9BA1A6' : 'black',
-              },
-            ]}
-          />
-          <CandlestickChart.PriceText
-            type="close"
-            style={[
-              styles.priceText,
-              {
-                color: colorScheme === 'dark' ? '#9BA1A6' : 'black',
-              },
-            ]}
-          />
+          {(['open', 'high', 'low', 'close'] as const).map((type) => (
+            <CandlestickChart.PriceText
+              key={type}
+              type={type}
+              style={[
+                styles.priceText,
+                { color: colorScheme === 'dark' ? '#9BA1A6' : 'black' },
+              ]}
+            />
+          ))}
         </ThemedView>
         <CandlestickChart.DatetimeText
           style={[
             styles.dateText,
-            {
-              color: colorScheme === 'dark' ? 'white' : 'black',
-            },
+            { color: colorScheme === 'dark' ? 'white' : 'black' },
           ]}
         />
       </CandlestickChart.Provider>
